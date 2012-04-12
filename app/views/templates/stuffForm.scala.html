@@ -1,0 +1,40 @@
+@(stuffForm: Form[models.Stuff] = controllers.Application.stuffForm)
+
+@import helper._
+@import helper.twitterBootstrap._
+
+<script id="stuffFormTemplate" type="text/x-jquery-tmpl">
+    @helper.form(action = routes.Application.createStuff, 'class -> "addStuff") {
+
+    <fieldset>
+        <legend>Add stuff</legend>
+
+        @inputText(
+            stuffForm("foo"),
+            '_label -> "foo",
+            '_help -> "Please enter a foo.",
+            '_error -> stuffForm.globalError
+        )
+
+        @checkbox(
+            stuffForm("bar"),
+            '_label -> "bar",
+            '_help -> "Please check the bar.",
+            '_error -> stuffForm.globalError
+        )
+
+        @inputText(
+            stuffForm("baz"),
+            '_label -> "baz",
+            '_help -> "Please enter a baz.",
+            '_error -> stuffForm.globalError
+        )
+
+    </fieldset>
+
+    <div class="actions">
+        <input type="submit">
+    </div>
+
+    }
+</script>

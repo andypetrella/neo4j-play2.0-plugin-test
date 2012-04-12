@@ -6,10 +6,52 @@
     <head>
         <title>@title</title>
         <link rel="stylesheet" media="screen" href="@routes.Assets.at("stylesheets/main.css")">
+        <!--<link rel="shortcut icon" type="image/png" href="@routes.Assets.at("images/favicon.png")">-->
+        <link rel="shortcut icon" type="image/png" href="@routes.Assets.at("images/favicon.ico")">
+
+        <link rel="stylesheet" media="screen" href="@routes.Assets.at("stylesheets/main.css")">
+        <link rel="stylesheet" media="screen" href="@routes.Assets.at("stylesheets/bootstrap/bootstrap.css")">
+
         <link rel="shortcut icon" type="image/png" href="@routes.Assets.at("images/favicon.png")">
+
         <script src="@routes.Assets.at("javascripts/jquery-1.7.1.min.js")" type="text/javascript"></script>
+        <script src="@routes.Assets.at("javascripts/bootstrap/bootstrap.min.js")" type="text/javascript"></script>
+        <script src="@routes.Assets.at("javascripts/bootstrap/bootstrap-dropdown.min.js")" type="text/javascript"></script>
+
+        <script src="@routes.Assets.at("javascripts/d3.v2.min.js")" type="text/javascript"></script>
+
+        <script src="@routes.Assets.at("javascripts/jquery.tmpl.min.js")" type="text/javascript"></script>
+
+        <script src="@routes.Assets.at("javascripts/spine/spine.js")" type="text/javascript"></script>
+        <script src="@routes.Assets.at("javascripts/spine/tmpl.js")" type="text/javascript"></script>
+        <script src="@routes.Assets.at("javascripts/spine/route.js")" type="text/javascript"></script>
+        <script src="@routes.Assets.at("javascripts/spine/ajax.js")" type="text/javascript"></script>
+
+
+        <script src="@routes.Assets.at("javascripts/portlets.js")" type="text/javascript"></script>
+        <script src="@routes.Assets.at("javascripts/modules/contacts.js")" type="text/javascript"></script>
+
+        <script src="@routes.Assets.at("javascripts/stuffs.js")" type="text/javascript"></script>
+        <script src="@routes.Assets.at("javascripts/app.js")" type="text/javascript"></script>
     </head>
     <body>
-        @content
+        <div class="navbar default navbar-fixed-top">
+            <div class="navbar-inner">
+                <div class="container">
+                    <div class="row-fluid">
+                        <div class="span12">
+                            <a class="brand" href="#"><h1 class="navbar-text">A Play 2.0 Test App using The Neo4J REST plugin</h1></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @templates.stuffs()
+        @templates.stuffForm()
+
+        <div id="main">
+            @content
+        </div>
     </body>
 </html>
