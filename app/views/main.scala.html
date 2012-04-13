@@ -18,7 +18,9 @@
         <script src="@routes.Assets.at("javascripts/bootstrap/bootstrap.min.js")" type="text/javascript"></script>
         <script src="@routes.Assets.at("javascripts/bootstrap/bootstrap-dropdown.min.js")" type="text/javascript"></script>
 
+
         <script src="@routes.Assets.at("javascripts/d3.v2.min.js")" type="text/javascript"></script>
+        <script src="@routes.Assets.at("javascripts/jquery.eventsource.js")" type="text/javascript"></script>
 
         <script src="@routes.Assets.at("javascripts/jquery.tmpl.min.js")" type="text/javascript"></script>
 
@@ -27,25 +29,23 @@
         <script src="@routes.Assets.at("javascripts/spine/route.js")" type="text/javascript"></script>
         <script src="@routes.Assets.at("javascripts/spine/ajax.js")" type="text/javascript"></script>
 
-
-        <script src="@routes.Assets.at("javascripts/portlets.js")" type="text/javascript"></script>
-        <script src="@routes.Assets.at("javascripts/modules/contacts.js")" type="text/javascript"></script>
-
         <script src="@routes.Assets.at("javascripts/stuffs.js")" type="text/javascript"></script>
         <script src="@routes.Assets.at("javascripts/app.js")" type="text/javascript"></script>
     </head>
     <body>
-        <div class="navbar default navbar-fixed-top">
-            <div class="navbar-inner">
-                <div class="container">
-                    <div class="row-fluid">
-                        <div class="span12">
-                            <a class="brand" href="#"><h1 class="navbar-text">A Play 2.0 Test App using The Neo4J REST plugin</h1></a>
+        <header>
+            <div class="navbar default navbar-fixed-top">
+                <div class="navbar-inner">
+                    <div class="container">
+                        <div class="row-fluid">
+                            <div class="span12">
+                                <a class="brand" href="#"><h1 class="navbar-text">A Play 2.0 Test App using The Neo4J REST plugin</h1></a>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </header>
 
         @templates.stuffs()
         @templates.stuffForm()

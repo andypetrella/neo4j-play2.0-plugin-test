@@ -7,7 +7,7 @@ class Stuffs extends Spine.Module
     @controller.destroy()
 
   class Model extends Spine.Model
-    @configure "Stuff", "neo4jid", "foo", "bar", "baz"
+    @configure "Stuff", "neo4jid", "foo", "bar", "baz", "creation"
 
     @extend Spine.Model.Ajax
 
@@ -49,13 +49,15 @@ class Stuffs extends Spine.Module
 
     render: (item) =>
       @html $("#stuffFormTemplate").tmpl ( item )
+      @rendered = true
       @
 
     create: (e)->
       e.preventDefault()
       stuff = Model.fromForm(e.target)
       stuff.save()
-      @el.remove()
+      @el.hide()
+      false
 
   class Controller extends Spine.Controller
     className: "stuffs"
@@ -80,6 +82,19 @@ class Stuffs extends Spine.Module
 
       Model.fetch()
 
+      #try with SSE http://www.html5rocks.com/en/tutorials/eventsource/basics/
+      #using https://github.com/rwldrn/jquery.eventsource
+      $.eventsource({
+        label: "stuff-count",
+        url: "/stream/stuff/count",
+        dataType: "text",
+
+        message: ( data ) ->
+          console.log( data );
+          $("#count").text(1+parseInt($("#count").text()))
+          #todo $.eventsource("close", "stuff-count");
+
+      });
 
     render: =>
       t = $('#stuffsTemplate').tmpl()
@@ -87,7 +102,10 @@ class Stuffs extends Spine.Module
       @
 
     showForm: () =>
-      @append(@addForm.render())
+      if @addForm.rendered
+        @addForm.el.show()
+      else
+        @append(@addForm.render())
 
     addOne: (item) =>
       stuff = new Item(item: item)
@@ -97,7 +115,9 @@ class Stuffs extends Spine.Module
 
     addAll: =>
       @clean()
-      @addOne i for i in Model.all()
+      all = Model.all()
+      $("#count").text(all.length)
+      @addOne i for i in all
 
     clean: =>
       @items.length = 0
