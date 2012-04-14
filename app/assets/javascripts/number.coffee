@@ -1,6 +1,6 @@
 class StuffCounts extends Spine.Module
-    init: (element) ->
-      @controller = new Controller(element)
+    init: (params) ->
+      @controller = new Controller(params)
 
     destroy: () ->
       @controller.destroy()
@@ -13,8 +13,10 @@ class StuffCounts extends Spine.Module
       className = "stuffCounts"
 
 
-      constructor: ->
+      constructor: (params)->
         super
+
+        @selectorEl = params.selectorEl
 
         @el = $(@selectorEl)
 
@@ -40,6 +42,15 @@ class StuffCounts extends Spine.Module
           message: ( data ) ->
             l = Model.last()
             data.n = l.count + data.n if l
+
+            f = Model.first()
+            if not @startingDate
+              if f
+                @startingDate = f.d
+              else
+                @startingDate = data.d
+
+            data.d = data.d - @startingDate
 
             m = new Model(count: data.n, date: data.d)
             m.save()

@@ -79,11 +79,7 @@ object Application extends Controller {
           stuff => for (
             r <- neo.root;
             ref <- r.referenceNode;
-            s <- {
-              val s: Node = Stuff.toNode(stuff)
-              println(s.data)
-              r.createNode(Some(s))
-            };
+            s <- r.createNode(Some(Stuff.toNode(stuff)));
             l <- ref.asInstanceOf[Node].createRelationship(
               Relation(
                 JsObject(
@@ -95,6 +91,7 @@ object Application extends Controller {
           ) yield s match {
               case node: Node => {
                 val st: Stuff = Stuff.fromNode(node)
+                stuffsActor ! NewStuff(st)
                 stuffsActor ! IncStuffs(1, st.creation)
                 Ok(toJson(st))
               }
@@ -129,7 +126,7 @@ object Application extends Controller {
 
   class StuffsActor extends Actor {
     protected def receive = {
-      case ns@NewStuff(s:Stuff) =>
+      case ns@NewStuff(s:Stuff) => masterActor ! ns
       case i@IncStuffs(n:Int, d:Long) => masterActor ! i
     }
   }
@@ -140,10 +137,11 @@ object Application extends Controller {
         Cache.set("uuids", Cache.getOrElse[Seq[String]]("uuids")(Nil).filter(_ != uuid))
         Cache.set(uuid+"."+"count", None)
       }
-      case (uuid:String, cs:Pushee[_]) => {
+      case (uuid:String, t:String, cs:Pushee[_]) => {
         Cache.set("uuids", uuid +: Cache.getOrElse[Seq[String]]("uuids")(Nil))
-        Cache.set(uuid+"."+"count", Some(cs))
+        Cache.set(uuid+"."+t, Some(cs))
       }
+      case NewStuff(s:Stuff) => Cache.getOrElse[Seq[String]]("uuids")(Nil) foreach { e => Cache.getAs[Option[Pushee[Stuff]]](e+"."+"add") map {op => op map {_.push(s)}}}
       case IncStuffs(n:Int, l:Long) => Cache.getOrElse[Seq[String]]("uuids")(Nil) foreach { e => Cache.getAs[Option[Pushee[(Int, Long)]]](e+"."+"count") map {op => op map {_.push((n,l))}}}
     }
   }
@@ -151,7 +149,7 @@ object Application extends Controller {
   def eventStream(uuid:String) = {
     println("entering the event stream")
     Enumerator.pushee[(Int, Long)](
-      { (pushee: Pushee[(Int, Long)]) => masterActor ! (uuid, pushee) },
+      { (pushee: Pushee[(Int, Long)]) => masterActor ! (uuid, "count", pushee) },
       { println("completed"); masterActor ! uuid }
     )
   }
@@ -159,7 +157,7 @@ object Application extends Controller {
   case class NewStuff(s:Stuff){}
   case class IncStuffs(n:Int = 0, date:Long){}
 
-  def nodeCount = Action {
+  def stuffsCount = Action {
     println("start count stream")
 
     val uuid: String = BigInt(1000, scala.util.Random).toString(36)
@@ -171,6 +169,35 @@ object Application extends Controller {
         CONNECTION -> "keep-alive",
         CACHE_CONTROL -> "no-cache"
       )), body = eventStream(uuid) &> toEventSource)
+  }
+
+  val toAddEventSource = Enumeratee.map[Stuff] {
+    msg =>
+        "data: " + stringify(toJson(msg)) + """
+
+"""
+  }
+  def addEventStream(uuid:String) = {
+    println("entering the add event stream")
+    Enumerator.pushee[Stuff](
+    { (pushee: Pushee[Stuff]) => masterActor ! (uuid, "add", pushee) },
+    { println("completed"); masterActor ! uuid }
+    )
+  }
+
+
+  def stuffAdd = Action {
+    println("start add stream")
+
+    val uuid: String = BigInt(1000, scala.util.Random).toString(36)
+
+    SimpleResult(
+      header = ResponseHeader(OK, Map(
+        CONTENT_LENGTH -> "-1",
+        CONTENT_TYPE -> "text/event-stream",
+        CONNECTION -> "keep-alive",
+        CACHE_CONTROL -> "no-cache"
+      )), body = addEventStream(uuid) &> toAddEventSource)
   }
 
 }

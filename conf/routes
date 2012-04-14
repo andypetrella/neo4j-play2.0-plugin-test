@@ -5,7 +5,8 @@
 # Home page
 GET     /                           controllers.Application.index
 
-GET     /stream/stuff/count         controllers.Application.nodeCount
+GET     /stream/stuff/count         controllers.Application.stuffsCount
+GET     /stream/stuff/add           controllers.Application.stuffAdd
 
 POST    /rest/stuffs                controllers.Application.createStuff
 GET     /rest/stuffs                controllers.Application.allStuffs

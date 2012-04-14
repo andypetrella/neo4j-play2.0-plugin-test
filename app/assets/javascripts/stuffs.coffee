@@ -6,21 +6,6 @@ class Stuffs extends Spine.Module
   destroy: () ->
     @controller.destroy()
 
-  class Model extends Spine.Model
-    @configure "Stuff", "neo4jid", "foo", "bar", "baz", "creation"
-
-    @extend Spine.Model.Ajax
-
-    @url: "/rest/stuffs"
-
-    validate: ->
-      unless @foo
-        "Foo is required (string)"
-      unless @bar
-        "Bar is required (boolean)"
-      unless @baz
-        "Baz is required (number)"
-
   class Item extends Spine.Controller
     events:
       "click" :     "click"
@@ -54,7 +39,7 @@ class Stuffs extends Spine.Module
 
     create: (e)->
       e.preventDefault()
-      stuff = Model.fromForm(e.target)
+      stuff = Stuff.fromForm(e.target)
       stuff.save()
       @el.hide()
       false
@@ -75,12 +60,12 @@ class Stuffs extends Spine.Module
 
       @render()
 
-      Model.bind "refresh", @addAll
-      Model.bind "create", @addOne
+      Stuff.bind "refresh", @addAll
+      Stuff.bind "create", @addOne
 
       @addForm = new Form()
 
-      Model.fetch()
+      Stuff.fetch()
 
 
     render: =>
@@ -102,7 +87,7 @@ class Stuffs extends Spine.Module
 
     addAll: =>
       @clean()
-      all = Model.all()
+      all = Stuff.all()
       @addOne i for i in all
 
     clean: =>
