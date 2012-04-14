@@ -135,23 +135,15 @@ object Application extends Controller {
   class MasterActor extends Actor {
     
     protected def receive = {
-      case (uuid:String, true) => {
-        val seq: Seq[String] = Cache.getOrElse[Seq[String]]("uuids")(Nil)
-        val value: Seq[String] = uuid +: seq
-        Cache.set("uuids", value)
-      }
-      case (uuid:String, false) => {
+      case uuid:String => {
         Cache.set("uuids", Cache.getOrElse[Seq[String]]("uuids")(Nil).filter(_ != uuid))
+        Cache.set(uuid+"."+"count", None)
       }
       case (uuid:String, cs:Pushee[_]) => {
-        Cache.set(uuid+"."+"count", cs)
+        Cache.set("uuids", uuid +: Cache.getOrElse[Seq[String]]("uuids")(Nil))
+        Cache.set(uuid+"."+"count", Some(cs))
       }
-      case IncStuffs(n:Int) => {
-        Cache.getOrElse[Seq[String]]("uuids")(Nil) foreach { e => {
-          Cache.getAs[Pushee[Int]](e+"."+"count") map {p => p.push(n)}
-        }
-        }
-      }
+      case IncStuffs(n:Int) => Cache.getOrElse[Seq[String]]("uuids")(Nil) foreach { e => Cache.getAs[Option[Pushee[Int]]](e+"."+"count") map {op => op map {_.push(n)}}}
     }
   }
 
@@ -159,7 +151,7 @@ object Application extends Controller {
     println("entering the event stream")
     Enumerator.pushee[Int](
       { (pushee: Pushee[Int]) => masterActor ! (uuid, pushee) },
-      { println("completed"); masterActor ! (uuid, false) }
+      { println("completed"); masterActor ! uuid }
     )
   }
 
@@ -168,11 +160,8 @@ object Application extends Controller {
 
   def nodeCount = Action {
     println("start count stream")
-    val uuid: String = BigInt(1000, scala.util.Random).toString(36)
 
-    //probably better to add the uuid at once with the pushee...
-    implicit val timeout = Timeout(10 second)
-    masterActor ? (uuid, true)
+    val uuid: String = BigInt(1000, scala.util.Random).toString(36)
 
     SimpleResult(
       header = ResponseHeader(OK, Map(
