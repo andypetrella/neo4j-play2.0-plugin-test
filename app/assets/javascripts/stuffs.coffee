@@ -82,19 +82,6 @@ class Stuffs extends Spine.Module
 
       Model.fetch()
 
-      #try with SSE http://www.html5rocks.com/en/tutorials/eventsource/basics/
-      #using https://github.com/rwldrn/jquery.eventsource
-      $.eventsource({
-        label: "stuff-count",
-        url: "/stream/stuff/count",
-        dataType: "text",
-
-        message: ( data ) ->
-          console.log( data );
-          $("#count").text(1+parseInt($("#count").text()))
-          #todo $.eventsource("close", "stuff-count");
-
-      });
 
     render: =>
       t = $('#stuffsTemplate').tmpl()
@@ -116,7 +103,6 @@ class Stuffs extends Spine.Module
     addAll: =>
       @clean()
       all = Model.all()
-      $("#count").text(all.length)
       @addOne i for i in all
 
     clean: =>

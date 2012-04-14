@@ -94,8 +94,9 @@ object Application extends Controller {
                   )))) //quick cast
           ) yield s match {
               case node: Node => {
-                stuffsActor ! IncStuffs(1)
-                Ok(toJson(Stuff.fromNode(node)))
+                val st: Stuff = Stuff.fromNode(node)
+                stuffsActor ! IncStuffs(1, st.creation)
+                Ok(toJson(st))
               }
               case _ => InternalServerError("Cannot create stuff...")
             }
@@ -115,9 +116,9 @@ object Application extends Controller {
     }
   }
 
-  val toEventSource = Enumeratee.map[Int] {
+  val toEventSource = Enumeratee.map[(Int, Long)] {
     msg =>
-      "data: " + msg.toString + """
+      "data: " + stringify(JsObject(Seq("n"->JsNumber(msg._1), "d" ->JsNumber(msg._2)))) + """
 
 """
   } //two \n are needed => spec
@@ -129,7 +130,7 @@ object Application extends Controller {
   class StuffsActor extends Actor {
     protected def receive = {
       case ns@NewStuff(s:Stuff) =>
-      case cs@IncStuffs(n:Int) => masterActor ! cs
+      case i@IncStuffs(n:Int, d:Long) => masterActor ! i
     }
   }
   class MasterActor extends Actor {
@@ -143,20 +144,20 @@ object Application extends Controller {
         Cache.set("uuids", uuid +: Cache.getOrElse[Seq[String]]("uuids")(Nil))
         Cache.set(uuid+"."+"count", Some(cs))
       }
-      case IncStuffs(n:Int) => Cache.getOrElse[Seq[String]]("uuids")(Nil) foreach { e => Cache.getAs[Option[Pushee[Int]]](e+"."+"count") map {op => op map {_.push(n)}}}
+      case IncStuffs(n:Int, l:Long) => Cache.getOrElse[Seq[String]]("uuids")(Nil) foreach { e => Cache.getAs[Option[Pushee[(Int, Long)]]](e+"."+"count") map {op => op map {_.push((n,l))}}}
     }
   }
 
   def eventStream(uuid:String) = {
     println("entering the event stream")
-    Enumerator.pushee[Int](
-      { (pushee: Pushee[Int]) => masterActor ! (uuid, pushee) },
+    Enumerator.pushee[(Int, Long)](
+      { (pushee: Pushee[(Int, Long)]) => masterActor ! (uuid, pushee) },
       { println("completed"); masterActor ! uuid }
     )
   }
 
   case class NewStuff(s:Stuff){}
-  case class IncStuffs(n:Int = 0){}
+  case class IncStuffs(n:Int = 0, date:Long){}
 
   def nodeCount = Action {
     println("start count stream")

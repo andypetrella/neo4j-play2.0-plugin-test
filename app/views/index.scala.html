@@ -4,54 +4,22 @@
 <div id="stuffsContainer">
 
 </div>
-<h1 id="count"></h1>
-<!--<script type="text/javascript">
+<div id="count">
+    <h2></h2>
 
+    <div></div>
 
+</div>
+<div id="d3"></div>
 
+<style type="text/css">
+    path {
+    stroke: steelblue;
+    stroke-width: 2;
+    fill: none;
+    }
 
-
-    var svg = d3.select("body").append("svg")
-    .attr("width", 720)
-    .attr("height", 600)
-    .append("g")
-    .attr("transform", "translate(50,120)");
-
-
-
-
-
-
-
-    var data = [{x:30, y:10}, {x:40, y:30}, {x:90, y:50}]
-
-
-    function valuex(d) {return d.x}
-    function valuey(d) {return d.y}
-
-    var x = d3.scale.linear().domain(d3.extent(data, valuex)).range([0, 650])
-    var y = d3.scale.linear().domain(d3.extent(data, valuey)).range([0, 400]);
-    y.ticks(10);
-
-    var xAxis = d3.svg.axis().scale(x).orient("top")
-    var yAxis = d3.svg.axis().scale(y).orient("left")
-
-    svg.selectAll("circle")
-        .data(data)
-        .enter().append("circle")
-        .attr("cx", function (d) {return x(d.x)})
-        .attr("cy", function (d) {return y(d.y)})
-        .attr("r", 5);
-
-    svg
-    .append("g")
-      .attr("class", "y axis")
-      .call(yAxis);
-    svg
-    .append("g")
-      .attr("class", "x axis")
-      .call(xAxis);
-</script>-->
+</style>
 
 }
 
