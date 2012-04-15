@@ -28,7 +28,7 @@ class StuffCounts extends Spine.Module
 
 
         Model.bind "create", @newCount
-        Model.bind "fetch", @newCount
+        #Model.bind "fetch", @newCount
 
         Model.fetch()
 

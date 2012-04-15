@@ -1,0 +1,5 @@
+@(stuff:Option[models.Stuff] = None)
+
+<script id="stuffTemplate" type="text/x-jquery-tmpl">
+    <li class="stuffItem">@stuff.map(_.foo).getOrElse("${foo}")</li>
+</script>

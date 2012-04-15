@@ -59,7 +59,7 @@ object Application extends Controller {
       ))
     )))
   ) yield (c match {
-      case cr: CypherResult => cr.result map { l => 
+      case cr: CypherResult => cr.result map { l =>
         Stuff.fromNode(Node(l.find(_._1 == "n").get._2.asInstanceOf[JsObject]))
       }
       case _ => Nil

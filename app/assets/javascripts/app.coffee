@@ -1,9 +1,8 @@
 class App extends Spine.Controller
 
   constructor: ->
-    @stuffController = new Stuffs(el:$("#stuffsContainer"))
+    @stuffController = new Stuffs(el:$("#stuffsContainer"), selectorEl:"#graph")
     @stuffCountController = new StuffCounts(selectorEl:"#d3")
-    @stuffGraphController = new StuffGraph(selectorEl:"#graph")
 
 window.App = App
 
