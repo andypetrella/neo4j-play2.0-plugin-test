@@ -130,7 +130,37 @@ object Stuff {
       case node: Node => Some(Stuff.fromNode(node))
       case _ => None
     }
-  
+
+  def full(implicit neo:Neo4JEndPoint) = for (
+    r <- neo.root;
+    ref <- r.referenceNode;
+    c <- r.cypher(JsObject(Seq(
+      "query" -> JsString("start init=node({reference}) match init-[:STUFF]->(n)-[r?]->nn return n, r, nn"),
+      "params" -> JsObject(Seq(
+        "reference" -> JsNumber(ref.asInstanceOf[Node].id) // just for test: ".asIn..." directly
+      ))
+    )))
+  ) yield (c match {
+      case cr: CypherResult => cr.result.foldLeft(Map():Map[Int, Stuff]) { (map, row) => {
+        val node: Node = Node(row.find(_._1 == "n").get._2.asInstanceOf[JsObject])
+        val stuff = map.get(node.id) match {
+          case None => Stuff.fromNode(node)
+          case Some(s) => s
+        }
+        row.find(_._1 == "r") match {
+          case None => stuff
+          case Some(rel) => {
+            val end = Stuff.fromNode(Node(row.find(_._1 == "nn").get._2.asInstanceOf[JsObject]))
+            stuff.copy(pokes = PokeStuff(end, rel) +: stuff.pokes)
+          }
+        }
+
+
+      }}
+      case _ => Nil
+    })
+
+
   def withPokes(stuff:Stuff)(implicit neo:Neo4JEndPoint) = PokeStuff.forStuff(stuff).map{s => stuff.copy(pokes = s)}
 }
 
@@ -138,7 +168,7 @@ object PokeStuff {
   implicit object PokeStuffJsonFormat extends Format[PokeStuff] {
 
     def reads(json: JsValue) = PokeStuff(
-      Stuff.get((json \ "poked").as[Int]).await.get.get,
+      Stuff(None, None, "", false, 0, None, Nil, 0),//todo
       (json \ "how").as[String]
     )
 

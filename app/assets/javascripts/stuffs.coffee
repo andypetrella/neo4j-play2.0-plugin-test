@@ -49,10 +49,13 @@ class Stuffs extends Spine.Module
       Stuff.bind "create", @newAdd
       Stuff.bind "refresh", @fetched
 
+      PokeStuff.bind "create", @newPoke
+
 
       @render()
 
       Stuff.fetch()
+      PokeStuff.fetch()
 
       @addForm = new Form()
 
@@ -67,12 +70,27 @@ class Stuffs extends Spine.Module
         message: ( data ) =>
           @newAdd(new Stuff(data))
       })
+      $.eventsource({
+        label: "stuff-stream",
+        url: "/stream/stuff/pokes",
+        dataType: "json",
+
+        message: ( data ) =>
+          console.log("new poke")
+          console.dir(data)
+          console.log("new poke")
+      })
 
       @restart()
 
     newAdd:(stuff) =>
        stuff.x = Math.random()*(@width-50)+25
        stuff.y = Math.random()*(@height-50)+25
+       @data.stuffs.push(stuff)
+       @data.relations.push({source:@data.stuffs[0], target:stuff})
+       @restart()
+
+    newPoke:(poke) =>
        @data.stuffs.push(stuff)
        @data.relations.push({source:@data.stuffs[0], target:stuff})
        @restart()
@@ -131,6 +149,29 @@ class Stuffs extends Spine.Module
               @color(d.group)
             else
               "red"
+          )
+          .on("click", (stuff) =>
+            if @currentStart
+              how = prompt("How ?")
+              if not how
+                alert("poke cancelled")
+                @currentStart = stuff
+                return
+              #create poke
+              console.log("create poke between")
+              console.dir(@currentStart.neo4jid)
+              console.log("and")
+              console.dir(stuff.neo4jid)
+              console.log("-------")
+              ps = new PokeStuff(stuff:@currentStart.neo4jid, how:how, poked:stuff.neo4jid)
+              console.dir(ps)
+              unless ps.save()
+                alert(ps.validate())
+              console.log("poke saved")
+              #reset @currentStart
+              @currentStart = undefined
+            else
+              @currentStart = stuff
           )
           .call(@force.drag)
 

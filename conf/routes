@@ -7,12 +7,14 @@ GET     /                           controllers.Application.index
 
 GET     /stream/stuff/count         controllers.Application.stuffsCount
 GET     /stream/stuff/add           controllers.Application.stuffAdd
+GET     /stream/stuff/pokes         controllers.Application.pokeStuffAdd
 
 
 POST    /rest/stuffs                controllers.Application.createStuff
 GET     /rest/stuffs                controllers.Application.allStuffs
 GET     /rest/stuffs/pokes/:id      controllers.Application.pokeForStuff(id:Int)
 
+GET     /rest/pokestuffs            controllers.Application.getAllPokeStuffs
 POST    /rest/pokestuffs            controllers.Application.pokeStuff
 
 

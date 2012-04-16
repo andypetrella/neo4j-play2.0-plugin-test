@@ -95,10 +95,22 @@ object Application extends Controller {
       }
     }
   }
-  
+
+  def fullStuffs = Action {
+      //todo ? Stuff.full map {Ok(toJson(stuff))}
+      Ok("")
+
+  }
+
+  def getAllPokeStuffs = Action {
+    val s:Seq[String] = Seq()
+    Ok(toJson(s)) //todo
+  }
+
   def pokeStuff = Action {
     implicit request =>
       Async {
+        println("new poke")
         pokeStuffForm.bindFromRequest.fold(
           formWithErrors => Promise.pure(BadRequest("Missing Information to poke stuff")),
           {case (stuff:Stuff, pokeStuff:PokeStuff) => PokeStuff.create(stuff, pokeStuff) map {
@@ -149,6 +161,20 @@ object Application extends Controller {
         CONNECTION -> "keep-alive",
         CACHE_CONTROL -> "no-cache"
       )), body = countEventStream(uuid) &> toEventSource)
+  }
+
+  def pokeStuffAdd = Action {
+    println("start poke stuff add stream")
+
+    val uuid: String = BigInt(1000, scala.util.Random).toString(36)
+
+    SimpleResult(
+      header = ResponseHeader(OK, Map(
+        CONTENT_LENGTH -> "-1",
+        CONTENT_TYPE -> "text/event-stream",
+        CONNECTION -> "keep-alive",
+        CACHE_CONTROL -> "no-cache"
+      )), body = pokesEventStream(uuid) &> toPokesEventSource)
   }
 
 
@@ -219,7 +245,7 @@ object Application extends Controller {
 """
   }
 
-  val toPokesEventSource = Enumeratee.map[Stuff] {
+  val toPokesEventSource = Enumeratee.map[PokeStuff] {
     msg =>
       "data: " + stringify(toJson(msg)) + """
 
