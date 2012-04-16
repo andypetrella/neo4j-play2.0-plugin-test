@@ -1,20 +1,25 @@
 package models
 
 import play.api.libs.json._
-import be.nextlab.play.neo4j.rest.{Neo4JEndPoint, Node}
+import play.api.libs.concurrent.Promise
+import be.nextlab.play.neo4j.rest.Relation._
+import controllers.Application.NewStuff._
+import controllers.Application.IncStuffs._
+import play.api.libs.json.Json._
+import be.nextlab.play.neo4j.rest.{Relation, CypherResult, Neo4JEndPoint, Node}
 
 /**
  * User: noootsab
  */
 
-case class Stuff(id: Option[Int], neo: Option[Node], foo: String, bar: Boolean, baz: Int, creation:Long = System.currentTimeMillis()) {
+case class Stuff(id: Option[Int], neo: Option[Node], foo: String, bar: Boolean, baz: Int, creation: Long = System.currentTimeMillis()) {
 
 }
 
 object Stuff {
 
   implicit object StuffJsonFormat extends Format[Stuff] {
-    
+
     def reads(json: JsValue) = Stuff(
       (json \ "neo4jid").asOpt[Int],
       None,
@@ -25,16 +30,18 @@ object Stuff {
     )
 
     def writes(stuff: Stuff) = JsObject(Seq(
-      "neo4jid" -> stuff.id.map{JsNumber(_)}.getOrElse(JsUndefined("Id not defined yet")),
+      "neo4jid" -> stuff.id.map {
+        JsNumber(_)
+      }.getOrElse(JsUndefined("Id not defined yet")),
       "foo" -> JsString(stuff.foo),
       "bar" -> JsBoolean(stuff.bar),
       "baz" -> JsNumber(stuff.baz),
       "creation" -> JsNumber(System.currentTimeMillis())
     ))
-    
+
   }
-  
-  
+
+
   def toData(stuff: Stuff): JsObject = JsObject(Seq(
     "foo" -> JsString(stuff.foo),
     "bar" -> JsBoolean(stuff.bar),
@@ -52,5 +59,52 @@ object Stuff {
     (node.data \ "baz").as[Int],
     (node.data \ "creation").asOpt[Long] getOrElse (System.currentTimeMillis())
   )
+
+  def all(implicit neo: Neo4JEndPoint): Promise[Seq[Stuff]] = for (
+    r <- neo.root;
+    ref <- r.referenceNode;
+    c <- r.cypher(JsObject(Seq(
+      "query" -> JsString("start init=node({reference}) match init-[:STUFF]->(n) return n"),
+      "params" -> JsObject(Seq(
+        "reference" -> JsNumber(ref.asInstanceOf[Node].id) // just for test: ".asIn..." directly
+      ))
+    )))
+  ) yield (c match {
+      case cr: CypherResult => cr.result map {
+        l =>
+          Stuff.fromNode(Node(l.find(_._1 == "n").get._2.asInstanceOf[JsObject]))
+      }
+      case _ => Nil
+    })
+
+  def create(stuff: Stuff)(implicit neo: Neo4JEndPoint) =
+    for (
+      r <- neo.root;
+      ref <- r.referenceNode;
+      s <- r.createNode(Some(Stuff.toNode(stuff)));
+      l <- ref.asInstanceOf[Node].createRelationship(
+        Relation(
+          JsObject(
+            Seq(
+              "type" -> JsString("STUFF"),
+              "end" -> JsString(s.asInstanceOf[Node].self),
+              "data" -> JsObject(Seq())
+            )))) //quick cast
+    ) yield s match {
+      case node: Node => {
+        val st: Stuff = Stuff.fromNode(node)
+        st
+      }
+      case _ => throw new IllegalStateException("Cannot create stuff...")
+    }
+
+  def get(id: Int)(implicit neo: Neo4JEndPoint) = for (
+    r <- neo.root;
+    n <- r.getNode(id)
+  ) yield n match {
+      case node: Node => Some(Stuff.fromNode(node))
+      case _ => None
+    }
+
 
 }
