@@ -1,6 +1,7 @@
 package models
 
 import play.api.libs.json._
+import play.api.libs.json.Json._
 import play.api.libs.concurrent.Promise
 import be.nextlab.play.neo4j.rest.{Relation, CypherResult, Neo4JEndPoint, Node}
 
@@ -29,9 +30,10 @@ case class Stuff(
                   pokes: Seq[PokeStuff] = Nil,
                   creation: Long = System.currentTimeMillis()) {}
 
-case class PokeStuff(poked: Stuff, how: String) {}
+case class PokeStuff(stuff:Stuff, poked: Stuff, how: String) {}
 
 object Stuff {
+  import PokeStuff.PokeStuffJsonFormat
 
   implicit object StuffJsonFormat extends Format[Stuff] {
 
@@ -44,7 +46,7 @@ object Stuff {
       (json \ "group").asOpt[String] map {
         Group.withName(_)
       },
-      Nil,
+      Nil, //todo ?
       (json \ "creation").asOpt[Long] getOrElse (System.currentTimeMillis())
     )
 
@@ -56,6 +58,7 @@ object Stuff {
       "bar" -> JsBoolean(stuff.bar),
       "baz" -> JsNumber(stuff.baz),
       "group" -> stuff.group.map((g: Group) => JsString(g.toString)).getOrElse(JsUndefined("No Group")),
+      "pokes" -> JsArray(stuff.pokes.map(PokeStuffJsonFormat.writes(_))),
       "creation" -> JsNumber(System.currentTimeMillis())
     ))
 
@@ -147,16 +150,20 @@ object Stuff {
           case None => Stuff.fromNode(node)
           case Some(s) => s
         }
-        row.find(_._1 == "r") match {
+        map + (stuff.neo.get.id -> (row.find(_._1 == "r") match {
           case None => stuff
-          case Some(rel) => {
-            val end = Stuff.fromNode(Node(row.find(_._1 == "nn").get._2.asInstanceOf[JsObject]))
-            stuff.copy(pokes = PokeStuff(end, rel) +: stuff.pokes)
+          case Some(rel) => { rel match {
+            case (_, r:JsObject) => {
+              val relation = Relation(r)
+              val end = Stuff.fromNode(Node(row.find(_._1 == "nn").get._2.asInstanceOf[JsObject]))
+              stuff.copy(pokes = PokeStuff(stuff, end, relation.`type`) +: stuff.pokes) //mmmmh not good... (stuff won't be the right one in poke!!!!)
+            }
+            //case (_, null) => stuff
+            case (_, JsNull) => stuff
           }
-        }
-
-
-      }}
+          }
+        }))
+      }}.values.toSeq
       case _ => Nil
     })
 
@@ -169,10 +176,12 @@ object PokeStuff {
 
     def reads(json: JsValue) = PokeStuff(
       Stuff(None, None, "", false, 0, None, Nil, 0),//todo
+      Stuff(None, None, "", false, 0, None, Nil, 0),//todo
       (json \ "how").as[String]
     )
 
     def writes(pokeStuff: PokeStuff) = JsObject(Seq(
+      "stuff" -> JsNumber(pokeStuff.stuff.id.get),
       "how" -> JsString(pokeStuff.how),
       "poked" -> JsNumber(pokeStuff.poked.id.get)
     ))
@@ -205,6 +214,7 @@ object PokeStuff {
       case cr: CypherResult => cr.result map {
         l => {
           PokeStuff(
+            stuff,
             Stuff.fromNode(Node(l.find(_._1 == "n").get._2.asInstanceOf[JsObject])),
             (l.find(_._1 == "r").get._2.asInstanceOf[JsObject] \ "type").as[String]
           )

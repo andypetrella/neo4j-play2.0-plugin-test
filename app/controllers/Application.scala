@@ -50,7 +50,7 @@ object Application extends Controller {
       (stuff, how, poked) => (for {
         s <- Stuff.get(stuff);
         p <- Stuff.get(poked)
-      } yield (s.get, PokeStuff(p.get, how))).await.get  //AOUTCH
+      } yield (s.get, PokeStuff(s.get, p.get, how))).await.get  //AOUTCH
     )(
       (s:(Stuff, PokeStuff)) => Some((s._1.id.get, s._2.how, s._2.poked.id.get))
     )
@@ -96,9 +96,10 @@ object Application extends Controller {
     }
   }
 
-  def fullStuffs = Action {
-      //todo ? Stuff.full map {Ok(toJson(stuff))}
-      Ok("")
+  def fullStuffs = Action { implicit request =>
+    Async {
+      Stuff.full map {f => Ok(toJson(f))}
+    }
 
   }
 

@@ -90,9 +90,15 @@ class Stuffs extends Spine.Module
        @data.relations.push({source:@data.stuffs[0], target:stuff})
        @restart()
 
+    createRelation: (poke) =>{
+      source:  @data.stuffs.filter((element, index, array) -> element.neo4jid is poke.stuff)[0],
+      target: @data.stuffs.filter((element, index, array) -> element.neo4jid is poke.poked)[0]
+    }
+
     newPoke:(poke) =>
-       @data.stuffs.push(stuff)
-       @data.relations.push({source:@data.stuffs[0], target:stuff})
+       relation = @createRelation(poke)
+       console.dir(relation)
+       @data.relations.push(relation)
        @restart()
 
     render: =>
@@ -110,26 +116,13 @@ class Stuffs extends Spine.Module
       @
     @
 
-    rndStuff: (excl) =>
-      n = @data.stuffs[Math.floor(Math.random()*@data.stuffs.length)]
-      n = @rndStuff(excl) if excl and n is excl
-      n
-
     fetched: () =>
       @data.stuffs = Stuff.all()
-      nl = Math.random()*150
-
-      @data.relations.length = 0
-      if @data.stuffs.length > 2
-        for n in [0..nl]
-          s = @rndStuff()
-          t = @rndStuff(s)
-          @data.relations.push(
-            source: s,
-            target: t
-          )
-
-      console.dir(@data.relations)
+      @data.relations = []
+      @data.stuffs.forEach((element, index, array) =>
+        console.dir(element)
+        @data.relations.push(@createRelation(p)) for p in element.pokes
+      )
 
       @restart()
 
