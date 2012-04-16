@@ -12,7 +12,25 @@ import be.nextlab.play.neo4j.rest.{Relation, CypherResult, Neo4JEndPoint, Node}
  * User: noootsab
  */
 
-case class Stuff(id: Option[Int], neo: Option[Node], foo: String, bar: Boolean, baz: Int, creation: Long = System.currentTimeMillis()) {
+object Group extends Enumeration {
+  type Group = Value
+  val first = Value("First")
+  val second = Value("Second")
+  val third = Value("Third")
+  val fourth = Value("Fourth")
+  val fifth = Value("Fifth")
+}
+
+import Group._
+
+case class Stuff(
+                  id: Option[Int],
+                  neo: Option[Node],
+                  foo: String,
+                  bar: Boolean,
+                  baz: Int,
+                  group: Option[Group],
+                  creation: Long = System.currentTimeMillis()) {
 
 }
 
@@ -26,6 +44,7 @@ object Stuff {
       (json \ "foo").as[String],
       (json \ "bar").as[Boolean],
       (json \ "baz").as[Int],
+      (json \ "group").asOpt[String] map {Group.withName(_)},
       (json \ "creation").asOpt[Long] getOrElse (System.currentTimeMillis())
     )
 
@@ -36,6 +55,7 @@ object Stuff {
       "foo" -> JsString(stuff.foo),
       "bar" -> JsBoolean(stuff.bar),
       "baz" -> JsNumber(stuff.baz),
+      "group" -> stuff.group.map((g:Group) => JsString(g.toString)).getOrElse(JsUndefined("No Group")),
       "creation" -> JsNumber(System.currentTimeMillis())
     ))
 
@@ -46,6 +66,7 @@ object Stuff {
     "foo" -> JsString(stuff.foo),
     "bar" -> JsBoolean(stuff.bar),
     "baz" -> JsNumber(stuff.baz),
+    "group" -> stuff.group.map((g:Group) => JsString(g.toString)).getOrElse(JsUndefined("No Group")),
     "creation" -> JsNumber(System.currentTimeMillis())
   ))
 
@@ -57,6 +78,7 @@ object Stuff {
     (node.data \ "foo").as[String],
     (node.data \ "bar").as[Boolean],
     (node.data \ "baz").as[Int],
+    (node.data \ "group").asOpt[String] map {Group.withName(_)},
     (node.data \ "creation").asOpt[Long] getOrElse (System.currentTimeMillis())
   )
 

@@ -1,5 +1,6 @@
 @(stuffForm: Form[models.Stuff] = controllers.Application.stuffForm)
 
+@import models.Stuff._
 @import helper._
 @import helper.twitterBootstrap._
 
@@ -27,6 +28,14 @@
             stuffForm("baz"),
             '_label -> "baz",
             '_help -> "Please enter a baz.",
+            '_error -> stuffForm.globalError
+        )
+
+        @select(
+            field = stuffForm("group"),
+            options = options(Group.values.toList.map{_.toString}),
+            '_label -> "group",
+            '_help -> "Please select a group.",
             '_error -> stuffForm.globalError
         )
 

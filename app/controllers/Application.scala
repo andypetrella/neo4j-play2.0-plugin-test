@@ -22,6 +22,7 @@ import akka.pattern.ask
 import java.util.UUID
 import akka.dispatch.Await
 import akka.util.Timeout
+import models.Stuff._
 
 
 object Application extends Controller {
@@ -37,11 +38,12 @@ object Application extends Controller {
       "neo4jid" -> optional[Int](number),
       "foo" -> text,
       "bar" -> boolean,
-      "baz" -> number
+      "baz" -> number,
+      "group" -> optional[String](text)
     )(
-      (id, foo, bar, baz) => Stuff(id, None, foo, bar, baz)
+      (id, foo, bar, baz, group) => Stuff(id, None, foo, bar, baz, group map {Group.withName(_)})
     )(
-      (stuff) => Some((stuff.id, stuff.foo, stuff.bar, stuff.baz))
+      (stuff) => Some((stuff.id, stuff.foo, stuff.bar, stuff.baz, stuff.group map {_.toString}))
     )
   )
 

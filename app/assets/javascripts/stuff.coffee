@@ -1,5 +1,5 @@
 class Stuff extends Spine.Model
-  @configure "Stuff", "neo4jid", "foo", "bar", "baz", "creation"
+  @configure "Stuff", "neo4jid", "foo", "bar", "baz", "group", "creation"
 
   @extend Spine.Model.Ajax
 

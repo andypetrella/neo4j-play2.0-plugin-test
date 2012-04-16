@@ -43,6 +43,7 @@ class Stuffs extends Spine.Module
 
       @width = 960
       @height = 500
+      @color = d3.scale.category10()
 
 
       Stuff.bind "create", @newAdd
@@ -76,63 +77,78 @@ class Stuffs extends Spine.Module
        @data.relations.push({source:@data.stuffs[0], target:stuff})
        @restart()
 
-
-
     render: =>
       t = $('#stuffsTemplate').tmpl()
       @html(t)
-
-      color = d3.scale.category20()
 
       @svg = d3.select(@selectorEl).append("svg")
          .attr("width", @width)
          .attr("height", @height)
 
-      window.brole2 = {}
-      window.brole2.svg = @svg
-
       @force = d3.layout.force()
-        #.charge(-120)
-        #.linkDistance(30)
+        .charge(-120)
+        .linkDistance(30)
         .size([@width, @height])
-
       @
     @
 
+    rndStuff: (excl) =>
+      n = @data.stuffs[Math.floor(Math.random()*@data.stuffs.length)]
+      n = @rndStuff(excl) if excl and n is excl
+      n
 
     fetched: () =>
       @data.stuffs = Stuff.all()
-      @data.relations = @data.stuffs.map((n) => {source:@data.stuffs[0], target:n})
+      nl = Math.random()*150
+
+      @data.relations.length = 0
+      if @data.stuffs.length > 2
+        for n in [0..nl]
+          s = @rndStuff()
+          t = @rndStuff(s)
+          @data.relations.push(
+            source: s,
+            target: t
+          )
+
+      console.dir(@data.relations)
+
       @restart()
 
     restart: () =>
-      window.brole2.links = @svg.selectAll("line.link")
+      @links = @svg.selectAll("line.link")
           .data(@data.relations)
         .enter().append("svg:line")
           .attr("class", "link")
 
-      window.brole2.nodes = @svg.selectAll("circle.node")
+      @nodes = @svg.selectAll("circle.node")
           .data(@data.stuffs)
         .enter().append("svg:circle")
           .attr("class", "node")
           .attr("r", 5)
+          .attr("fill", (d) =>
+            if d.group
+              @color(d.group)
+            else
+              "red"
+          )
           .call(@force.drag)
 
-      @force.nodes(@data.stuffs)
+      @force
+      .nodes(@data.stuffs)
       .links(@data.relations)
-      .on("tick", () ->
-          window.brole2.nodes
+      .on("tick", () =>
+          @nodes
             .attr("cx", (d) -> d.x = Math.max(5, Math.min(960 - 5, d.x)))
             .attr("cy", (d) -> d.y = Math.max(5, Math.min(500 - 5, d.y)))
 
-          window.brole2.links
+          @links
             .attr("x1", (d) -> d.source.x)
             .attr("y1", (d) -> d.source.y)
             .attr("x2", (d) -> d.target.x)
             .attr("y2", (d) -> d.target.y)
       )
-
-      @force.start()
+      .start()
 
       @
 
