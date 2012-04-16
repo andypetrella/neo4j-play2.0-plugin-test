@@ -2,10 +2,6 @@ package models
 
 import play.api.libs.json._
 import play.api.libs.concurrent.Promise
-import be.nextlab.play.neo4j.rest.Relation._
-import controllers.Application.NewStuff._
-import controllers.Application.IncStuffs._
-import play.api.libs.json.Json._
 import be.nextlab.play.neo4j.rest.{Relation, CypherResult, Neo4JEndPoint, Node}
 
 /**
@@ -30,9 +26,10 @@ case class Stuff(
                   bar: Boolean,
                   baz: Int,
                   group: Option[Group],
-                  creation: Long = System.currentTimeMillis()) {
+                  pokes: Seq[PokeStuff] = Nil,
+                  creation: Long = System.currentTimeMillis()) {}
 
-}
+case class PokeStuff(poked: Stuff, how: String) {}
 
 object Stuff {
 
@@ -44,7 +41,10 @@ object Stuff {
       (json \ "foo").as[String],
       (json \ "bar").as[Boolean],
       (json \ "baz").as[Int],
-      (json \ "group").asOpt[String] map {Group.withName(_)},
+      (json \ "group").asOpt[String] map {
+        Group.withName(_)
+      },
+      Nil,
       (json \ "creation").asOpt[Long] getOrElse (System.currentTimeMillis())
     )
 
@@ -55,7 +55,7 @@ object Stuff {
       "foo" -> JsString(stuff.foo),
       "bar" -> JsBoolean(stuff.bar),
       "baz" -> JsNumber(stuff.baz),
-      "group" -> stuff.group.map((g:Group) => JsString(g.toString)).getOrElse(JsUndefined("No Group")),
+      "group" -> stuff.group.map((g: Group) => JsString(g.toString)).getOrElse(JsUndefined("No Group")),
       "creation" -> JsNumber(System.currentTimeMillis())
     ))
 
@@ -66,7 +66,7 @@ object Stuff {
     "foo" -> JsString(stuff.foo),
     "bar" -> JsBoolean(stuff.bar),
     "baz" -> JsNumber(stuff.baz),
-    "group" -> stuff.group.map((g:Group) => JsString(g.toString)).getOrElse(JsUndefined("No Group")),
+    "group" -> stuff.group.map((g: Group) => JsString(g.toString)).getOrElse(JsUndefined("No Group")),
     "creation" -> JsNumber(System.currentTimeMillis())
   ))
 
@@ -78,7 +78,10 @@ object Stuff {
     (node.data \ "foo").as[String],
     (node.data \ "bar").as[Boolean],
     (node.data \ "baz").as[Int],
-    (node.data \ "group").asOpt[String] map {Group.withName(_)},
+    (node.data \ "group").asOpt[String] map {
+      Group.withName(_)
+    },
+    Nil,
     (node.data \ "creation").asOpt[Long] getOrElse (System.currentTimeMillis())
   )
 
@@ -127,6 +130,57 @@ object Stuff {
       case node: Node => Some(Stuff.fromNode(node))
       case _ => None
     }
+  
+  def withPokes(stuff:Stuff)(implicit neo:Neo4JEndPoint) = PokeStuff.forStuff(stuff).map{s => stuff.copy(pokes = s)}
+}
 
+object PokeStuff {
+  implicit object PokeStuffJsonFormat extends Format[PokeStuff] {
+
+    def reads(json: JsValue) = PokeStuff(
+      Stuff.get((json \ "poked").as[Int]).await.get.get,
+      (json \ "how").as[String]
+    )
+
+    def writes(pokeStuff: PokeStuff) = JsObject(Seq(
+      "how" -> JsString(pokeStuff.how),
+      "poked" -> JsNumber(pokeStuff.poked.id.get)
+    ))
+
+  }
+
+  def create(stuff:Stuff, pokeStuff:PokeStuff)(implicit neo: Neo4JEndPoint) =
+    for (
+      r <- neo.root;
+      l <- stuff.neo.get.createRelationship(Relation(JsObject(Seq(
+        "type" -> JsString(pokeStuff.how),
+        "end" -> JsString(pokeStuff.poked.neo.get.self),
+        "data" -> JsObject(Seq())
+      ))))
+    ) yield l match {
+      case node: Relation => pokeStuff
+      case _ => throw new IllegalStateException("Cannot create poke stuff...")
+    }
+
+  def forStuff(stuff:Stuff)(implicit neo:Neo4JEndPoint) = for (
+    r <- neo.root;
+    ref <- r.referenceNode;
+    c <- r.cypher(JsObject(Seq(
+      "query" -> JsString("start init=node({stuffId}) match init-[r]->(n) return r, n"),
+      "params" -> JsObject(Seq(
+        "stuffId" -> JsNumber(stuff.id.get)
+      ))
+    )))
+  ) yield (c match {
+      case cr: CypherResult => cr.result map {
+        l => {
+          PokeStuff(
+            Stuff.fromNode(Node(l.find(_._1 == "n").get._2.asInstanceOf[JsObject])),
+            (l.find(_._1 == "r").get._2.asInstanceOf[JsObject] \ "type").as[String]
+          )
+        }
+      }
+      case _ => Nil
+    })
 
 }
