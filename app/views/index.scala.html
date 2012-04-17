@@ -15,16 +15,47 @@
     }
 </style>
 
+<h1>Playing with Stuffs (and technologies)</h1>
+<section>
+    This site is meant t several things test, spikes and so on. Involved technologies are
+    <ul>
+        <li><a href="http://www.playframework.org/">Play 2.0</a>: the web framework</li>
+        <li><a href="http://www.scala-lang.org/">Scala</a>: the server side language + templating system</li>
+        <li><a href="http://akka.io/">Akka 2.0</a>: to sent async event</li>
+        <li><a href="http://neo4j.org/">Neo4J</a>: the backend graph service (used in coalition with an emerging <a href="https://github.com/andypetrella/neo4j-rest-play-plugin">Play 2.0 Plugin</a>)</li>
+        <li><a href="http://coffeescript.org">CoffeeScript</a>: the client side language</li>
+        <li><a href="http://lesscss.org/">LESS</a>: the client side styling language</li>
+        <li><a href="http://twitter.github.com/bootstrap/">Bootstrap</a>: the Twitter's HTML+CSS layout framework</li>
+        <li><a href="http://spinejs.com/">Spine.js</a>: the javascript MVC framework</li>
+        <li><a href="http://mbostock.github.com/d3/">d3.js</a>: the rendering library</li>
+        <li><a href="http://www.html5rocks.com/en/tutorials/eventsource/basics/">HTML5's SSE</a>: the spec compliant way to deal continually with a server</li>
+        <li><a href="http://www.heroku.com/">Heroku</a>: the hosting provider</li>
+    </ul>
+</section>
 
+<h2>Some Words</h2>
+<section>
+    <p>This site present a form to add Stuffs (use the `plus` button), a Stuff contains stuffs (a string, a boolean, an int and a group).
+    Each Stuff are rendered in a specific color depending of its group in a force graph. And all Stuffs can be connected by clicking pairs of them in the graph (and entering the link type).</p>
+
+    <p>When using the site a line graph is automatically updated with server messages telling that new Stuffs has been added. This graph gives the number of them since first connection.</p>
+
+    <p>The force graph is also updated whenever some one is adding Stuffs or links, without polling...</p>
+</section>
+<h3>How to User</h3>
+<ul>
+    <li>Click on + => add stuff (foo = String, baz = number) and validate: Will create a new Stuff in neo4j</li>
+    <li>Click on two Stuffs in the graph to link them => Will create a relation in neo4j (try it 11 times... ^^)</li>
+</ul>
+<hr>
 <div id="stuffsContainer">
 
 </div>
 
-<div id="d3"></div>
-<div id="graph"></div>
 
-<div id="test"></div>
-<div id="test2"></div>
+<div id="graph"></div>
+<div id="d3"></div>
+
 }
 
 

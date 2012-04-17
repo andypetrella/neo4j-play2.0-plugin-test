@@ -20,8 +20,8 @@ class StuffCounts extends Spine.Module
 
         @el = $(@selectorEl)
 
-        @xRange = [0, 650]
-        @yRange = [400, 0] #inverted because of svg crs
+        @xRange = [0, 400]
+        @yRange = [320, 0] #inverted because of svg crs
 
 
         @render()
@@ -64,11 +64,11 @@ class StuffCounts extends Spine.Module
 
       render: =>
         @svg = d3.select(@selectorEl).append("svg")
-            .attr("width", 720)
-            .attr("height", 600)
+            .attr("width", 500)
+            .attr("height", 400)
             .append("g")
 
-        @svg.attr("transform", "translate(50,120)");
+        @svg.attr("transform", "translate(30,50)");
 
         @svg.append("svg:path")
 
@@ -82,12 +82,9 @@ class StuffCounts extends Spine.Module
       computeScale: (domain, accessor, range) =>
           d3.scale.linear().domain(d3.extent(domain, accessor)).range(range)
 
-
       computeAxis: (scale, orientation) => d3.svg.axis().scale(scale).orient(orientation)
 
-
       applyAxis: (selector, ax) => @svg.selectAll(selector).call(ax)
-
 
       applyLine: (selector, data, x, y) =>
         @svg
@@ -106,7 +103,8 @@ class StuffCounts extends Spine.Module
           xAxis = @computeAxis(x, "bottom")
           @applyAxis("g.x.axis", xAxis);
 
-          y = @computeScale(data, @yAccessor, @yRange)
+          maxY = (Math.floor(d3.max(data, @yAccessor) / 10) + 1) * 10
+          y = d3.scale.linear().domain([0, maxY]).range(@yRange)
           yAxis = @computeAxis(y, "left")
           @applyAxis("g.y.axis", yAxis);
 

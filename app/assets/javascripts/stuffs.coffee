@@ -41,7 +41,7 @@ class Stuffs extends Spine.Module
         stuffs: []
         relations: []
 
-      @width = 960
+      @width = 400
       @height = 500
       @color = d3.scale.category10()
 
@@ -81,13 +81,12 @@ class Stuffs extends Spine.Module
           console.log("new poke")
       })
 
-      @restart()
+      #@restart()
 
     newAdd:(stuff) =>
-       stuff.x = Math.random()*(@width-50)+25
-       stuff.y = Math.random()*(@height-50)+25
+       #stuff.x = Math.random()*(@width-50)+25
+       #stuff.y = Math.random()*(@height-50)+25
        @data.stuffs.push(stuff)
-       @data.relations.push({source:@data.stuffs[0], target:stuff})
        @restart()
 
     createRelation: (poke) =>{
@@ -129,51 +128,60 @@ class Stuffs extends Spine.Module
     restart: () =>
       @links = @svg.selectAll("line.link")
           .data(@data.relations)
+      @links
         .enter().append("svg:line")
           .attr("class", "link")
+      @links
+        .exit()
+          .remove()
 
-      @nodes = @svg.selectAll("circle.node")
-          .data(@data.stuffs)
-        .enter().append("svg:circle")
-          .attr("class", "node")
-          .attr("r", 5)
-          .attr("fill", (d) =>
-            if d.group
-              @color(d.group)
-            else
-              "red"
-          )
-          .on("click", (stuff) =>
-            if @currentStart
-              how = prompt("How ?")
-              if not how
-                alert("poke cancelled")
+      @nodes = @svg.selectAll("circle.node").data(@data.stuffs)
+      @nodes
+        .exit()
+          .remove()
+      @nodes
+        .enter()
+          .append("svg:circle")
+            .attr("class", "node")
+            .attr("r", 5)
+            .attr("fill", (d) =>
+              if d.group
+                @color(d.group)
+              else
+                "red"
+            )
+            .on("click", (stuff) =>
+              if @currentStart
+                how = prompt("How ?")
+                if not how
+                  alert("poke cancelled")
+                  @currentStart = stuff
+                  return
+                #create poke
+                console.log("create poke between")
+                console.dir(@currentStart.neo4jid)
+                console.log("and")
+                console.dir(stuff.neo4jid)
+                console.log("-------")
+                ps = new PokeStuff(stuff:@currentStart.neo4jid, how:how, poked:stuff.neo4jid)
+                console.dir(ps)
+                unless ps.save()
+                  alert(ps.validate())
+                console.log("poke saved")
+                #reset @currentStart
+                @currentStart = undefined
+              else
                 @currentStart = stuff
-                return
-              #create poke
-              console.log("create poke between")
-              console.dir(@currentStart.neo4jid)
-              console.log("and")
-              console.dir(stuff.neo4jid)
-              console.log("-------")
-              ps = new PokeStuff(stuff:@currentStart.neo4jid, how:how, poked:stuff.neo4jid)
-              console.dir(ps)
-              unless ps.save()
-                alert(ps.validate())
-              console.log("poke saved")
-              #reset @currentStart
-              @currentStart = undefined
-            else
-              @currentStart = stuff
-          )
-          .call(@force.drag)
+            )
+            .call(@force.drag)
+
 
       @force
       .nodes(@data.stuffs)
       .links(@data.relations)
       .on("tick", () =>
           @nodes
-            .attr("cx", (d) -> d.x = Math.max(5, Math.min(960 - 5, d.x)))
+            .attr("cx", (d) -> d.x = Math.max(5, Math.min(400 - 5, d.x)))
             .attr("cy", (d) -> d.y = Math.max(5, Math.min(500 - 5, d.y)))
 
           @links
@@ -188,7 +196,10 @@ class Stuffs extends Spine.Module
 
     showForm: () =>
       if @addForm.rendered
-        @addForm.el.show()
+        if @addForm.el.is(":visible")
+          @addForm.el.hide()
+        else
+          @addForm.el.show()
       else
         @append(@addForm.render())
 
