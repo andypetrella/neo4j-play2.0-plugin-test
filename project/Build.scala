@@ -13,8 +13,8 @@ object ApplicationBuild extends Build {
     "be.nextlab" %% "neo4j-rest-play-plugin" % "0.0.1-SNAPSHOT",
 
 
-    "org.specs2" %% "specs2" % "1.8.2" % "test" withSources
-    //todo "be.nextlab" %% "gatling-play2-plugin" % "1.0-SNAPSHOT" % "test"
+    "org.specs2" %% "specs2" % "1.8.2" % "test" withSources,
+    "be.nextlab" %% "gatling-play2-plugin" % "1.0-SNAPSHOT" % "test"
   )
   // Only compile the bootstrap bootstrap.less file and any other *.less file in the stylesheets directory
   def customLessEntryPoints(base: File): PathFinder = (
