@@ -32,13 +32,16 @@ class TestStress extends Specification {
     "Accept" -> "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
     "Accept-Charset" -> "ISO-8859-1,utf-8;q=0.7,*;q=0.7"
   )
-  val headers_2 = headers_1 + (com.excilys.ebi.gatling.http.Predef.CONTENT_ENCODING -> "application/x-www-form-urlencoded")
+  val headers_2 = headers_1 + (CONTENT_ENCODING -> "application/x-www-form-urlencoded")
 
   val server = Util.createServer(3333)
 
   def startServer: Unit = server.start()
 
   def stopServer: Unit = server.stop()
+
+  def fromToParams[T](h:PostHttpRequestBuilder, f:Form[T], t:T) =
+    f.fill(t).data.foldLeft(h) {(acc, e) => acc.param(e._1, e._2)}
 
   def is =
     "stress html pages" ^ Step(startServer) ^ {
@@ -56,7 +59,9 @@ class TestStress extends Specification {
 
             val httpConf = httpConfig.baseURL(baseUrl)
 
-            Seq(scn.configure users 10 ramp 2 protocolConfig httpConf)
+            val seq = Seq(scn.configure users 10 ramp 2 protocolConfig httpConf)
+            println("end 1")
+            seq
           }
         }) {
         println("done 1")
@@ -67,16 +72,13 @@ class TestStress extends Specification {
         "create" ! GatlingApp(new GSimulation() {
           def apply() = {
             println("start 2")
-            val fill: Form[Stuff] = Application.stuffForm.fill(Stuff(None, None, "test", false, 1, Some(Group.first), Nil, System.currentTimeMillis()))
 
-            val mkString: String = fill.data.map(e => e._1 + "=" + e._2).mkString("&")
+            val headers = fromToParams(
+              http("rest_create_stuff").post(routes.Application.createStuff.url).headers(headers_2),
+              Application.stuffForm,
+              Stuff(None, None, "test", false, 1, Some(Group.first), Nil, System.currentTimeMillis())
+            )
 
-            println(mkString)
-
-            val h: PostHttpRequestBuilder = http("rest_create_stuff")
-              .post(routes.Application.createStuff.url)
-              .headers(headers_2)
-            val headers = fill.data.foldLeft(h) {(acc, e) => acc.param(e._1, e._2)}
 
             val scn = scenario("rest create stuff").exec(headers.check(status.is(200)))
 
@@ -86,11 +88,7 @@ class TestStress extends Specification {
             println("end 2")
             seq
           }
-        }) {
-
-          //SampleSimulations.simulations(baseUrl, routes.Application.createStuff().url) foreach Util.gatling
-          
-          println(routes.Application.createStuff.url)
+        }) {          
           println("done 2")
           ok("")
 

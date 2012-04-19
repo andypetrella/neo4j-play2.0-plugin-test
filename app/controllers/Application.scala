@@ -74,10 +74,12 @@ object Application extends Controller {
   def createStuff = Action {
     implicit request =>
       Async {
+        println("creating stuff")
         stuffForm.bindFromRequest.fold(
           formWithErrors => {
-            println(request.body.asFormUrlEncoded)
-            println(formWithErrors.errors.mkString("----------------", "\n", "+++++++++++++++++"))
+            println("-------form error------")
+            formWithErrors.errors.foreach(println)
+            println("+++++++++++++++++++++++")
             Promise.pure(BadRequest("Missing Information to create Stuff"))
           },
           stuff => Stuff.create(stuff) map {
