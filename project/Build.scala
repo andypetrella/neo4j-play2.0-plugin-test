@@ -7,7 +7,11 @@ object ApplicationBuild extends Build {
   val appName = "neo4j-play2.0-plugin-test"
   val appVersion = "1.0"
 
-  val cloudbees = "Cloudbees public snapshot" at "https://repository-andy-petrella.forge.cloudbees.com/snapshot"
+  /* LOCAL MAVEN REPO */
+  val cloudbeesRepo = "Cloudbees public snapshot" at "https://repository-andy-petrella.forge.cloudbees.com/snapshot"
+
+  /* LOCAL MAVEN REPO */
+  val localMavenRepo = "Local Maven Repository" at file(Path.userHome.absolutePath+"/.m2/repository").toURI.toURL.toString
 
   val appDependencies = Seq(
     "be.nextlab" %% "neo4j-rest-play-plugin" % "0.0.1-SNAPSHOT",
@@ -23,7 +27,7 @@ object ApplicationBuild extends Build {
     )
 
   val main = PlayProject(appName, appVersion, appDependencies, mainLang = SCALA).settings(
-    resolvers ++= Seq(cloudbees),
+    resolvers ++= Seq(cloudbeesRepo, localMavenRepo),
     lessEntryPoints <<= baseDirectory(customLessEntryPoints)
   )
 

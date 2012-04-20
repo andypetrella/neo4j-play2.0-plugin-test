@@ -11,12 +11,16 @@ import be.nextlab.play.gatling.Util
 import be.nextlab.play.gatling.Util._
 import com.excilys.ebi.gatling.core.Predef._
 import com.excilys.ebi.gatling.http.Predef._
+import com.excilys.ebi.gatling.core.structure._
 import com.excilys.ebi.gatling.core.scenario.configuration.{Simulation => GSimulation}
 import org.specs2.specification.Step
 import models._
 import play.api.libs.json.JsObject
 import play.api.data.Form
 import com.excilys.ebi.gatling.http.request.builder.PostHttpRequestBuilder
+import com.excilys.ebi.gatling.core.result.writer.DataWriter
+import akka.actor.{Actor, ActorRef}
+import com.excilys.ebi.gatling.core.action.system
 
 /**
  *
@@ -36,12 +40,26 @@ class TestStress extends Specification {
 
   val server = Util.createServer(3333)
 
-  def startServer: Unit = server.start()
+  def startServer {
+    server.start()
+  }
 
-  def stopServer: Unit = server.stop()
+  def stopServer {
+    server.stop()
+  }
 
-  def fromToParams[T](h:PostHttpRequestBuilder, f:Form[T], t:T) =
-    f.fill(t).data.foldLeft(h) {(acc, e) => acc.param(e._1, e._2)}
+  def cleanGatling {
+    // shut all actors down
+    system.shutdown
+
+    // closes all the resources used during simulation
+    //not in 1.1.4-SNAPSHOT... ResourceRegistry.closeAll
+  }
+
+  def fromToParams[T](h: PostHttpRequestBuilder, f: Form[T], t: T) =
+    f.fill(t).data.foldLeft(h) {
+      (acc, e) => acc.param(e._1, e._2)
+    }
 
   def is =
     "stress html pages" ^ Step(startServer) ^ {
@@ -59,20 +77,15 @@ class TestStress extends Specification {
 
             val httpConf = httpConfig.baseURL(baseUrl)
 
-            val seq = Seq(scn.configure users 10 ramp 2 protocolConfig httpConf)
-            println("end 1")
-            seq
+            Seq(scn.configure users 10 ramp 2 protocolConfig httpConf)
           }
         }) {
-        println("done 1")
         ok("")
       }
     } ^ end ^ {
       "stress rest stuff urls" ^ {
         "create" ! GatlingApp(new GSimulation() {
           def apply() = {
-            println("start 2")
-
             val headers = fromToParams(
               http("rest_create_stuff").post(routes.Application.createStuff.url).headers(headers_2),
               Application.stuffForm,
@@ -84,19 +97,36 @@ class TestStress extends Specification {
 
             val httpConf = httpConfig.baseURL(baseUrl)
 
-            val seq = Seq(scn.configure users 10 ramp 2 protocolConfig httpConf)
-            println("end 2")
-            seq
+            Seq(scn.configure users 10 ramp 2 protocolConfig httpConf)
           }
-        }) {          
-          println("done 2")
+        }) {
           ok("")
+        } ^
+          "create a lot" ! GatlingApp(new GSimulation() {
+            def apply() = {
+              val headers = fromToParams(
+                http("rest_create_stuff").post(routes.Application.createStuff.url).headers(headers_2),
+                Application.stuffForm,
+                Stuff(None, None, "test", false, 1, Some(Group.first), Nil, System.currentTimeMillis())
+              )
 
-        }
+
+              val scn = scenario("rest create stuff").loop(
+                chain.exec(
+                headers
+                  .check(status.is(200))
+              )) counterName("manyCreationIn10s") during(10, SECONDS)
+
+              val httpConf = httpConfig.baseURL(baseUrl)
+
+              Seq(scn.configure users 10 ramp 2 protocolConfig httpConf)
+            }
+          }) {
+            ok("")
+          }
       }
     } ^
       Step(stopServer) ^
+      Step(cleanGatling) ^
       end
-     /* */
-
 }

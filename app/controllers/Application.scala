@@ -74,7 +74,6 @@ object Application extends Controller {
   def createStuff = Action {
     implicit request =>
       Async {
-        println("creating stuff")
         stuffForm.bindFromRequest.fold(
           formWithErrors => {
             println("-------form error------")
