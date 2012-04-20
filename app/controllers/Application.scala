@@ -41,6 +41,8 @@ object Application extends Controller {
     )
   )
 
+  //def stuffFormToJs(s:Stuff) = stuffForm.fill(s).
+
   val pokeStuffForm = Form[(Stuff, PokeStuff)](
     mapping(
       "stuff" -> number,
@@ -73,7 +75,12 @@ object Application extends Controller {
     implicit request =>
       Async {
         stuffForm.bindFromRequest.fold(
-          formWithErrors => Promise.pure(BadRequest("Missing Information to create Stuff")),
+          formWithErrors => {
+            println("-------form error------")
+            formWithErrors.errors.foreach(println)
+            println("+++++++++++++++++++++++")
+            Promise.pure(BadRequest("Missing Information to create Stuff"))
+          },
           stuff => Stuff.create(stuff) map {
             st => {
               stuffsActor ! NewStuff(st)
