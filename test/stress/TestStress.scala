@@ -38,16 +38,20 @@ class TestStress extends Specification {
   )
   val headers_2 = headers_1 + (CONTENT_ENCODING -> "application/x-www-form-urlencoded")
 
+  //creates a fake Play 2.0 server running on 3333 which defines the gatling plugin automatically
   val server = Util.createServer(3333)
 
+  //function that starts the server, should be used in a specs Step BEFORE the whole specification starts
   def startServer {
     server.start()
   }
 
+  //function that stops the server, should be used in a specs Step AFTER the whole specification has ran
   def stopServer {
     server.stop()
   }
 
+  //function that cleans all gatling ressources used, including its Akka actor system (same remarks than for stopServer)
   def cleanGatling {
     // shut all actors down
     system.shutdown

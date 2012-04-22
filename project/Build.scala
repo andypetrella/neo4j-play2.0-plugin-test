@@ -7,7 +7,7 @@ object ApplicationBuild extends Build {
   val appName = "neo4j-play2.0-plugin-test"
   val appVersion = "1.0"
 
-  /* LOCAL MAVEN REPO */
+  /* Cloudbees plublic snapshot REPO */
   val cloudbeesRepo = "Cloudbees public snapshot" at "https://repository-andy-petrella.forge.cloudbees.com/snapshot"
 
   /* LOCAL MAVEN REPO */
