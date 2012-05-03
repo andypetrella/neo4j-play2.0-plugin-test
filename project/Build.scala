@@ -5,20 +5,24 @@ import PlayProject._
 object ApplicationBuild extends Build {
 
   val appName = "neo4j-play2.0-plugin-test"
-  val appVersion = "1.0"
+  val appVersion = "1.0-SNAPSHOT"
 
   /* Cloudbees plublic snapshot REPO */
   val cloudbeesRepo = "Cloudbees public snapshot" at "https://repository-andy-petrella.forge.cloudbees.com/snapshot"
 
   /* LOCAL MAVEN REPO */
   val localMavenRepo = "Local Maven Repository" at file(Path.userHome.absolutePath+"/.m2/repository").toURI.toURL.toString
+  
+  /* CLOUDBEES ap repo */  
+  val cloudbeesSnaphot = "CloubBees SNAPSHOT Repository" at "https://repository-andy-petrella.forge.cloudbees.com/snapshot"
+  val cloudbeesRelease = "CloubBees RELEASE Repository" at "https://repository-andy-petrella.forge.cloudbees.com/release"
 
   val appDependencies = Seq(
     "be.nextlab" %% "neo4j-rest-play-plugin" % "0.0.1-SNAPSHOT",
 
 
     "org.specs2" %% "specs2" % "1.8.2" % "test" withSources,
-    "be.nextlab" %% "gatling-play2-plugin" % "1.0-SNAPSHOT" % "test"
+    "be.nextlab" %% "gatling-play2-plugin" % "0.0.1-SNAPSHOT" % "test"
   )
   // Only compile the bootstrap bootstrap.less file and any other *.less file in the stylesheets directory
   def customLessEntryPoints(base: File): PathFinder = (
@@ -27,7 +31,7 @@ object ApplicationBuild extends Build {
     )
 
   val main = PlayProject(appName, appVersion, appDependencies, mainLang = SCALA).settings(
-    resolvers ++= Seq(cloudbeesRepo, localMavenRepo),
+    resolvers ++= Seq(cloudbeesRepo, localMavenRepo, cloudbeesSnaphot, cloudbeesRelease),
     lessEntryPoints <<= baseDirectory(customLessEntryPoints)
   )
 
